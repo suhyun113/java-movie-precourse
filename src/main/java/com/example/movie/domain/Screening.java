@@ -28,4 +28,9 @@ public class Screening {
         boolean isTheaterOperating = theater.isOperating(startDateTime, getEndDateTime());
         return isMovieAvailable && isTheaterOperating;
     }
+
+    // 다른 상영과 시간 겹치는지 확인
+    public boolean isTimeConflict(Screening other) {
+        return this.startDateTime.isBefore(other.getEndDateTime()) && other.getStartDateTime().isBefore(this.getEndDateTime());
+    }
 }
