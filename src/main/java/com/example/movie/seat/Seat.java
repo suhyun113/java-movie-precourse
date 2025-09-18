@@ -1,4 +1,4 @@
-package com.example.movie;
+package com.example.movie.seat;
 
 public class Seat {
     private final char row;
