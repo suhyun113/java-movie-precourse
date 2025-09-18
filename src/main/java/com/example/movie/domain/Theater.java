@@ -1,6 +1,9 @@
 package com.example.movie.domain;
 
+import com.example.movie.enums.SeatGrade;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Theater {
@@ -9,11 +12,11 @@ public class Theater {
     private final int closingHour;
     private final List<Seat> seats;
 
-    public Theater(int number, int openingHour, int closingHour, List<Seat> seats) {
+    public Theater(int number, int openingHour, int closingHour, int totalRows, int toalColumns) {
         this.number = number;
         this.openingHour = openingHour;
         this.closingHour = closingHour;
-        this.seats = seats;
+        this.seats = createSeats(totalRows, toalColumns);
     }
 
     public int getNumber() {return number;}
@@ -41,5 +44,32 @@ public class Theater {
         int closingTotalMinutes = closingHour * 60;
 
         return currentTotalMinutes >= openingTotalMinutes && currentTotalMinutes <= closingTotalMinutes;
+    }
+
+    // 좌석 목록 생성 및 등급 할당
+    private List<Seat> createSeats(int rows, int columns) {
+        List<Seat> newSeats = new ArrayList<>();
+        for (int i = 0; i < rows; i++) {
+            char rowChar = (char) ('A' + i);
+            for (int j = 1; j <= columns; j++) {
+                SeatGrade grade = calculateSeatGrade(rowChar);
+                newSeats.add(new Seat(rowChar, j, grade, false));
+            }
+        }
+        return newSeats;
+    }
+
+    // 좌석 등급을 결정
+    private SeatGrade calculateSeatGrade(char rowChar) {
+        // 총 16줄: A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P
+        int rowIndex = rowChar - 'A'; // A: 0
+        // 나머지는 A석
+        if (rowIndex < 3) { // 맨 앞 3줄
+            return SeatGrade.B;
+        }
+        if (rowIndex >= 10) { // 맨 뒤 4줄 정도
+            return SeatGrade.S;
+        }
+        return SeatGrade.A;
     }
 }
