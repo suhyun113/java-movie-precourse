@@ -12,7 +12,7 @@ public class Seat {
         this.row = row;
         this.column = column;
         this.grade = grade;
-        this.isReserved = false;
+        this.isReserved = isReserved;
     }
 
     public char getRow() { return row; }
