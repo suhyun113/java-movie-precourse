@@ -5,37 +5,40 @@ import com.example.movie.domain.Screening;
 import com.example.movie.policy.MovieDayDiscountPolicy;
 import com.example.movie.policy.TimeDiscountPolicy;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PriceService {
     private final MovieDayDiscountPolicy movieDayDiscountPolicy = new MovieDayDiscountPolicy();
     private final TimeDiscountPolicy timeDiscountPolicy = new TimeDiscountPolicy();
 
-    // 가격 계산
     public int calculatePrice(List<Reservation> reservations) {
-        int totalBasePrice = calculateBasePrice(reservations);
-        int finalPrice = totalBasePrice;
+        if (reservations == null || reservations.isEmpty()) return 0;
 
-        if (reservations.isEmpty()) {
-            return 0;
+        // 상영별 기본가 합산
+        Map<Screening, Integer> baseByScreening = new HashMap<>();
+        for (Reservation r : reservations) {
+            int base = r.getSeats().stream()
+                    .mapToInt(seat -> seat.getGrade().getPrice())
+                    .sum();
+            baseByScreening.merge(r.getScreening(), base, Integer::sum);
         }
 
-        // 1. 무비데이 할인 (비율) 적용
-        Screening firstScreening = reservations.get(0).getScreening();
-        int movieDayDiscount = movieDayDiscountPolicy.calculateDiscountAmount(firstScreening, finalPrice);
-        finalPrice -= movieDayDiscount;
+        // 상영별로 할인 1회 적용(무비데이% → 시간대 정액)
+        int total = 0;
+        for (Map.Entry<Screening, Integer> e : baseByScreening.entrySet()) {
+            Screening sc = e.getKey();
+            int amount = e.getValue();
 
-        // 2. 시간대 할인 (정액) 적용
-        int timeDiscount = timeDiscountPolicy.calculateDiscountAmount(firstScreening, finalPrice);
-        finalPrice -= timeDiscount;
+            int movieDayDiscount = movieDayDiscountPolicy.calculateDiscountAmount(sc, amount);
+            amount -= movieDayDiscount;
 
-        return finalPrice;
-    }
+            int timeDiscount = timeDiscountPolicy.calculateDiscountAmount(sc, amount);
+            amount -= timeDiscount;
 
-    private int calculateBasePrice(List<Reservation> reservations) {
-        return reservations.stream()
-                .flatMap(reservation -> reservation.getSeats().stream())
-                .mapToInt(seat -> seat.getGrade().getPrice())
-                .sum();
+            total += amount;
+        }
+        return total;
     }
 }
